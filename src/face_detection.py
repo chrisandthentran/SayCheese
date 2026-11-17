@@ -1,22 +1,40 @@
 import cv2
+import os
+from datetime import datetime
 
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-# Read the input image
-#img = cv2.imread('test.png')
-cap = cv2.VideoCapture('test.mp4')
+folder_path = 'imgs'
+os.makedirs(folder_path, exist_ok=True)
 
-while cap.isOpened():
-    _, img = cap.read()
+cv2.namedWindow("preview")
+vc = cv2.VideoCapture(0)
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+if vc.isOpened(): # try to get the first frame
+    rval, frame = vc.read()
+else:
+    rval = False
 
-    for (x, y , w ,h) in faces:
-        cv2.rectangle(img, (x,y), (x+w, y+h), (255, 0 , 0), 3)
+file_count = 0
+while rval: 
+    cv2.imshow("preview", frame)
+    rval, frame = vc.read()
+    key = cv2.waitKey(20)
 
-    # Display the output
-    cv2.imshow('img', img)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if key == 27: # exit on ESC
         break
+    if key == ord('q'):
+        # Get the current time to use as a file name
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Construct the file path
+        file_name = os.path.join(folder_path, f'IMG_{current_time}.jpg')
+        # Check if the file already exists
+        while os.path.exists(file_name):
+            # If the file exists, increment the file count
+            file_count += 1
+            # Construct a new file name
+            file_name = os.path.join(folder_path, f'IMG_{current_time}_{file_count}.jpg')
+        # Save the frame as an image
+        cv2.imwrite(file_name, frame)
+        print("Photo Success!")
 
-cap.release()
+vc.release()
+cv2.destroyWindow("preview")
